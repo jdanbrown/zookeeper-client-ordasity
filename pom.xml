@@ -4,7 +4,7 @@
 
     <groupId>com.twitter.common</groupId>
     <artifactId>zookeeper</artifactId>
-    <version>0.1.1</version>
+    <version>0.1.1-ordasity</version>
 
     <name>zookeeper_client</name>
     <url>https://github.com/twitter/commons</url>
