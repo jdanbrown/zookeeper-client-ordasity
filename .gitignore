@@ -1,0 +1,24 @@
+# General
+*.jar
+*.class
+*.log
+*.tar.gz
+
+# mvn
+target/
+
+# sbt
+target/
+dist/
+lib_managed/
+src_managed/
+project/boot/
+project/plugins/project/
+
+# IntelliJ
+.idea
+*.iml
+
+# Sublime Text
+*.sublime-workspace
+*.sublime-project
