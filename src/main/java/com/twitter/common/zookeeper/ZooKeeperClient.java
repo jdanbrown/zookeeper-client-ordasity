@@ -144,6 +144,7 @@ public class ZooKeeperClient {
   private SessionState sessionState;
 
   private final Set<Watcher> watchers = new CopyOnWriteArraySet<Watcher>();
+  private final Object watcherNotificationLock = new Object();
 
   private static Iterable<InetSocketAddress> combine(InetSocketAddress address,
       InetSocketAddress... addresses) {
@@ -270,8 +271,20 @@ public class ZooKeeperClient {
               }
           }
 
-          for (Watcher watcher : watchers) {
-            watcher.process(event);
+          // Notify watchers, taking care to mutex across successive zk event threads in case
+          // multiple zooKeeper objects are live simultaneously. This happens pretty reliably
+          // anytime a watcher calls ZooKeeperClient.get() in response to session expiration: as
+          // zooKeeper0 is dying from an expired session, one of its watchers calls get() on
+          // EventThread0, which spawns zooKeeper1 with the same watchers, and then there's an
+          // unsafe race between the watcher.process(Expired) calls on EventThread0 and the
+          // watcher.process(SyncConnected) calls on EventThread1. Synchronizing this loop is
+          // sufficient to ensure, in any case that a watcher.process(Expired) call triggers get(),
+          // that all watcher.process(Expired) calls complete before any
+          // watcher.process(SyncConnected) call begins.
+          synchronized(watcherNotificationLock) {
+            for (Watcher watcher : watchers) {
+              watcher.process(event);
+            }
           }
         }
       };
